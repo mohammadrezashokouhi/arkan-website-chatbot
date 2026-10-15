@@ -3,7 +3,7 @@ import type { EmbeddingConfig } from "./config";
 
 /**
  * تبدیل متن به بردار (embedding) — provider-agnostic.
- * در Milestone 1 فقط Cohere پیاده شده؛ ساختار برای افزودن OpenAI/Google/Voyage آماده است.
+ * پیش‌فرض، Hugging Face Inference است؛ Cohere برای سازگاری با تنظیمات قدیمی باقی مانده است.
  *
  * inputType:
  *   - 'query'    → برای embed کردن سؤال کاربر هنگام جست‌وجو
@@ -19,6 +19,8 @@ export async function embed(
   if (texts.length === 0) return [];
 
   switch (config.provider) {
+    case "huggingface":
+      return embedHuggingFace(texts, inputType, config);
     case "cohere":
       return embedCohere(texts, inputType, config);
     default:
@@ -26,6 +28,46 @@ export async function embed(
         `ارائه‌دهنده‌ی embedding پشتیبانی‌نشده در این نسخه: ${config.provider}`
       );
   }
+}
+
+async function embedHuggingFace(
+  texts: string[],
+  inputType: EmbedInputType,
+  config: EmbeddingConfig
+): Promise<number[][]> {
+  const apiKey = process.env.HF_TOKEN;
+  if (!apiKey) {
+    throw new Error("کلید HF_TOKEN تنظیم نشده است؛ امکان ساخت embedding وجود ندارد.");
+  }
+
+  // multilingual-e5 برای retrieval به پیشوندهای query و passage نیاز دارد.
+  const prefix = inputType === "query" ? "query: " : "passage: ";
+  const model = encodeURIComponent(config.model).replace(/%2F/gi, "/");
+  const res = await fetch(`https://router.huggingface.co/hf-inference/models/${model}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      inputs: texts.map((text) => `${prefix}${text}`),
+      normalize: true,
+      truncate: true,
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`خطای Hugging Face embedding (${res.status}): ${body.slice(0, 300)}`);
+  }
+  const json = await res.json();
+  const vectors: number[][] | undefined = json;
+  if (!Array.isArray(vectors) || vectors.length !== texts.length) {
+    throw new Error("پاسخ Hugging Face فاقد بردارهای معتبر بود.");
+  }
+  if (vectors.some((vector) => !Array.isArray(vector) || vector.length !== config.dimensions)) {
+    throw new Error(`ابعاد embedding با pgvector سازگار نیست؛ مقدار مورد انتظار ${config.dimensions} است.`);
+  }
+  return vectors;
 }
 
 async function embedCohere(

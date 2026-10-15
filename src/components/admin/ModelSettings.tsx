@@ -5,6 +5,12 @@ import type { ModelConfig, EmbeddingConfig } from "@/lib/rag/config";
 import { saveModelConfigAction, saveEmbeddingConfigAction } from "@/app/admin/chatbot-actions";
 
 const MODEL_GROUPS: { provider: string; models: { slug: string; label: string }[] }[] = [
+  {
+    provider: "OpenRouter — مدل open-weight رایگان",
+    models: [
+      { slug: "qwen/qwen3.8-27b:free", label: "Qwen3.8 27B Free (پیشنهادی)" },
+    ],
+  },
   { provider: "Anthropic (Claude)", models: [{ slug: "anthropic/claude-haiku-4.5", label: "Claude Haiku 4.5" }] },
   {
     provider: "Google (Gemini)",
@@ -65,7 +71,7 @@ export default function ModelSettings({
     <div className="space-y-8">
       <div>
         <h1 className="font-heading text-h3 font-bold text-pine">مدل‌ها و بازیابی</h1>
-        <p className="mt-1 text-caption text-slate">همه‌ی مدل‌های تولید پاسخ از طریق OpenRouter فراخوانی می‌شوند؛ تعویض مدل فقط تغییر یک گزینه است.</p>
+        <p className="mt-1 text-caption text-slate">مدل پیش‌فرض Qwen3.8 از طریق OpenRouter اجرا می‌شود و برای استقرار serverless روی Vercel مناسب است.</p>
       </div>
 
       {/* هر کانال پیکربندی مستقل دارد: ویجت می‌تواند مدل ارزان‌تر و پاسخ کوتاه‌تر داشته باشد. */}
@@ -145,7 +151,7 @@ function ModelForm({ model }: { model: ModelConfig }) {
             ))}
           </select>
           <Hint>
-            مدل زبانی‌ای که هر پیام کاربر را همراه با منابع بازیابی‌شده می‌گیرد و پاسخ را تولید می‌کند. مدل‌های سبک‌تر (Flash / Mini / Nano) سریع‌تر و ارزان‌ترند، مدل‌های بزرگ‌تر دقیق‌تر.
+            مدل زبانی‌ای که هر پیام کاربر را همراه با منابع بازیابی‌شده می‌گیرد و پاسخ را تولید می‌کند. مدل رایگان OpenRouter محدودیت نرخ و ظرفیت دارد؛ برای ترافیک تجاری می‌توانید همین‌جا یک مدل پولی سازگار انتخاب کنید.
           </Hint>
         </div>
         <div>
@@ -216,7 +222,7 @@ function EmbeddingForm({ embedding }: { embedding: EmbeddingConfig }) {
   const [topK, setTopK] = useState(embedding.top_k);
   const [threshold, setThreshold] = useState(embedding.similarity_threshold);
   const [rerankerEnabled, setRerankerEnabled] = useState(embedding.reranker_enabled);
-  const [rerankerModel, setRerankerModel] = useState(embedding.reranker_model ?? "rerank-multilingual-v3.0");
+  const [rerankerModel, setRerankerModel] = useState(embedding.reranker_model ?? "");
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -302,7 +308,7 @@ function EmbeddingForm({ embedding }: { embedding: EmbeddingConfig }) {
             جست‌وجوی برداری «شبیه‌ترین» قطعه‌ها را می‌آورد، نه لزوماً «مرتبط‌ترین». با فعال‌بودن این گزینه، سه برابر
             <span dir="ltr" className="font-mono"> top_k </span>
             قطعه بازیابی می‌شود و یک مدل مخصوص، آن‌ها را بر اساس ارتباط واقعی با سؤال دوباره مرتب می‌کند؛ فقط بهترین‌ها به مدل پاسخ‌دهنده می‌رسند.
-            دقت را محسوس بالا می‌برد و به‌ازای هر پرسش یک فراخوانی ارزان اضافه می‌کند. نیازمند <span dir="ltr" className="font-mono">COHERE_API_KEY</span>.
+            دقت را محسوس بالا می‌برد، اما پیاده‌سازی فعلی آن از Cohere و کلید جداگانه استفاده می‌کند؛ در تنظیمات پیش‌فرض خاموش است.
           </Hint>
           {rerankerEnabled && (
             <input

@@ -87,7 +87,7 @@ export async function ingestDocument(source: IngestSource): Promise<IngestResult
     const chunks = splitText(text, cfg.chunk_size, cfg.chunk_overlap);
     if (chunks.length === 0) throw new Error("هیچ قطعه‌ای تولید نشد.");
 
-    // ۴) embed (دسته‌ای تا ۹۶ تایی برای رعایت محدودیت Cohere)
+    // ۴) embed دسته‌ای؛ اندازه برای حافظه و سازگاری ارائه‌دهنده محافظه‌کارانه است.
     const allVectors: number[][] = [];
     const BATCH = 90;
     for (let i = 0; i < chunks.length; i += BATCH) {

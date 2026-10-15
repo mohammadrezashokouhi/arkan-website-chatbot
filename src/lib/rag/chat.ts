@@ -7,7 +7,7 @@ import { getSupabaseAdmin } from "@/lib/supabase";
 import { leadSchema } from "@/lib/validation";
 import { retrieve, buildContext } from "./retrieve";
 import { getModelConfig, getActivePrompt, getChatSettings, type ChatSettings } from "./config";
-import { streamChat, isOpenRouterConfigured, type ChatMessage } from "./generate";
+import { streamChat, isGenerationConfigured, type ChatMessage } from "./generate";
 import {
   looksLikeInjection,
   INJECTION_REPLY,
@@ -54,7 +54,7 @@ async function prepareTurn(input: ChatTurnInput): Promise<PreparedTurn> {
   const channel = input.channel ?? "web";
   const settings = await getChatSettings();
 
-  if (!isOpenRouterConfigured()) {
+  if (!isGenerationConfigured()) {
     return { result: null, conversationId: input.conversationId ?? null, sources: [], fallbackText: NOT_CONFIGURED };
   }
 

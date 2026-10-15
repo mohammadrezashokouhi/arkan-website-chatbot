@@ -31,6 +31,11 @@ select $rayan$تو دستیار هوشمند فارسی‌زبان «رایان 
 اگر اطلاعات کافی نیست صادقانه بگو و پیشنهاد ثبت درخواست مشاوره بده. پاسخ‌ها به فارسی باشند؛ وب پاسخ کامل‌تر، ویجت کوتاه‌تر و تلگرام ساده و خوانا باشد.$rayan$, 'Rayan Digital v1', true, 'rayan-migration'
 where not exists (select 1 from arkan.prompt_versions where persona = 'Rayan Digital v1');
 update arkan.prompt_versions set is_active = true where persona = 'Rayan Digital v1';
+update arkan.model_config
+set provider = 'openrouter', active_model = 'qwen/qwen3.8-27b:free', fallback_model = null, updated_at = now();
+update arkan.embedding_config
+set provider = 'huggingface', model = 'intfloat/multilingual-e5-large', dimensions = 1024,
+    reranker_enabled = false, reranker_model = null, updated_at = now();
 update arkan.widget_config set primary_color = '#D6242A',
  welcome_message = 'سلام! من دستیار رایان دیجیتال هستم. دربارهٔ طراحی سایت، سئو و دیجیتال مارکتینگ بپرسید یا درخواست مشاوره ثبت کنید.',
  launcher_text = 'گفتگو با رایان',

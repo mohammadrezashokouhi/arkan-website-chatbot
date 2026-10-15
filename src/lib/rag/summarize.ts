@@ -1,6 +1,6 @@
 import "server-only";
 import { getSupabaseAdmin } from "@/lib/supabase";
-import { completeText, isOpenRouterConfigured } from "./generate";
+import { completeText, isGenerationConfigured } from "./generate";
 import { getModelConfig } from "./config";
 
 /**
@@ -20,7 +20,7 @@ const SUMMARY_SYSTEM = `تو خلاصه‌نویس گفتگوهای دستیار
 
 export async function summarizeConversation(conversationId: string): Promise<string | null> {
   const supabase = getSupabaseAdmin();
-  if (!supabase || !isOpenRouterConfigured()) return null;
+  if (!supabase || !isGenerationConfigured()) return null;
 
   const { data: msgs } = await supabase
     .from("messages")

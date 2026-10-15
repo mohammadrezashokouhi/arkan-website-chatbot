@@ -8,7 +8,7 @@ import { z } from 'zod';
 function load(file, deps, env = {}) {
  const code = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
  const exports = {};
- vm.runInNewContext(code, { exports, require: (id) => { if (id === 'server-only') return {}; if (id in deps) return deps[id]; throw Error('Unexpected dependency: ' + id); }, process: { env }, Buffer, console });
+ vm.runInNewContext(code, { exports, require: (id) => { if (id === 'server-only') return {}; if (id in deps) return deps[id]; throw Error('Unexpected dependency: ' + id); }, process: { env }, Buffer, console, fetch: (...args) => globalThis.fetch(...args) });
  return exports;
 }
 test('conversation capabilities reject tampering and use channel isolation', () => {
@@ -29,7 +29,7 @@ async function toolsFor(db) {
   '@/lib/validation': { leadSchema: z.object({full_name:z.string(),phone:z.string(),business_name:z.string(),stage:z.string(),challenge:z.string()}) },
   './retrieve': { retrieve: async () => [], buildContext: () => '' },
   './config': { getChatSettings: async () => ({ max_messages_per_conv: 0 }), getActivePrompt: async () => 'Rayan', getModelConfig: async () => ({}) },
-  './generate': { isOpenRouterConfigured: () => true, streamChat: o => { opts = o; return {text: Promise.resolve('ok')}; } },
+  './generate': { isGenerationConfigured: () => true, streamChat: o => { opts = o; return {text: Promise.resolve('ok')}; } },
   './policy': { isWithinOfficeHours: () => true }, './summarize': {},
  });
  await brain.getReplyText({ userMessage: 'سلام' });
@@ -68,4 +68,22 @@ test('successful lead capture persists consent and an unguessable tracking code'
  assert.match(result.tracking_code,/^[a-f0-9]{32}$/);
  assert.equal(row.tracking_code,result.tracking_code);
  assert.ok(row.consent_at);
+});
+
+test('Hugging Face embeddings use E5 prefixes and validate 1024 dimensions', async () => {
+ const calls = [];
+ const embeddings = load('src/lib/rag/embeddings.ts', {}, { HF_TOKEN: 'hf_test' });
+ const oldFetch = globalThis.fetch;
+ globalThis.fetch = async (url, init) => {
+  calls.push([url, init.headers, JSON.parse(init.body)]);
+  return { ok: true, json: async () => [Array(1024).fill(0.1)] };
+ };
+ try {
+  const result = await embeddings.embed(['سلام'], 'query', { provider:'huggingface', model:'intfloat/multilingual-e5-large', dimensions:1024 });
+  assert.equal(result[0].length, 1024);
+  assert.equal(calls[0][0], 'https://router.huggingface.co/hf-inference/models/intfloat/multilingual-e5-large');
+  assert.equal(calls[0][1].Authorization, 'Bearer hf_test');
+  assert.deepEqual(calls[0][2].inputs, ['query: سلام']);
+  assert.equal(calls[0][2].normalize, true);
+ } finally { globalThis.fetch = oldFetch; }
 });

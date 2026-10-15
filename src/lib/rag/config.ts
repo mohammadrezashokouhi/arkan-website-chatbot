@@ -7,7 +7,7 @@ import { getSupabaseAdmin } from "@/lib/supabase";
  */
 
 export type EmbeddingConfig = {
-  provider: string; // cohere | openai | google | voyage
+  provider: string; // huggingface | cohere
   model: string;
   dimensions: number;
   chunk_size: number;
@@ -29,8 +29,8 @@ export type ModelConfig = {
 };
 
 export const DEFAULT_EMBEDDING_CONFIG: EmbeddingConfig = {
-  provider: "cohere",
-  model: "embed-multilingual-v3.0",
+  provider: "huggingface",
+  model: "intfloat/multilingual-e5-large",
   dimensions: 1024,
   chunk_size: 500,
   chunk_overlap: 50,
@@ -43,11 +43,11 @@ export const DEFAULT_EMBEDDING_CONFIG: EmbeddingConfig = {
 export const DEFAULT_MODEL_CONFIG: ModelConfig = {
   channel: "web",
   provider: "openrouter",
-  active_model: "google/gemini-3.5-flash",
+  active_model: "qwen/qwen3.8-27b:free",
   temperature: 0.4,
   max_tokens: 2000,
   top_p: 1,
-  fallback_model: "google/gemini-2.5-flash",
+  fallback_model: null,
 };
 
 // پرسونای پیش‌فرض (همتای ردیف seed در chatbot-schema.sql)
@@ -62,20 +62,30 @@ export async function getEmbeddingConfig(): Promise<EmbeddingConfig> {
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (!data) return DEFAULT_EMBEDDING_CONFIG;
-  return { ...DEFAULT_EMBEDDING_CONFIG, ...data } as EmbeddingConfig;
+  const stored = data ? { ...DEFAULT_EMBEDDING_CONFIG, ...data } : DEFAULT_EMBEDDING_CONFIG;
+  return {
+    ...stored,
+    provider: process.env.EMBEDDING_PROVIDER || stored.provider,
+    model: process.env.EMBEDDING_MODEL || stored.model,
+    dimensions: Number(process.env.EMBEDDING_DIMENSIONS || stored.dimensions),
+  } as EmbeddingConfig;
 }
 
 export async function getModelConfig(channel = "web"): Promise<ModelConfig> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return { ...DEFAULT_MODEL_CONFIG, channel };
+  const applyEnv = (config: ModelConfig): ModelConfig => ({
+    ...config,
+    provider: process.env.AI_PROVIDER || config.provider,
+    active_model: process.env.GENERATION_MODEL || config.active_model,
+  });
+  if (!supabase) return applyEnv({ ...DEFAULT_MODEL_CONFIG, channel });
   const { data } = await supabase
     .from("model_config")
     .select("*")
     .eq("channel", channel)
     .limit(1)
     .maybeSingle();
-  if (data) return { ...DEFAULT_MODEL_CONFIG, ...data } as ModelConfig;
+  if (data) return applyEnv({ ...DEFAULT_MODEL_CONFIG, ...data } as ModelConfig);
 
   // کانال ردیف اختصاصی ندارد ⇒ به تنظیمات کانال «وب» برگرد، نه به مقادیر هاردکد.
   if (channel !== "web") {
@@ -85,9 +95,9 @@ export async function getModelConfig(channel = "web"): Promise<ModelConfig> {
       .eq("channel", "web")
       .limit(1)
       .maybeSingle();
-    if (web) return { ...DEFAULT_MODEL_CONFIG, ...web, channel } as ModelConfig;
+    if (web) return applyEnv({ ...DEFAULT_MODEL_CONFIG, ...web, channel } as ModelConfig);
   }
-  return { ...DEFAULT_MODEL_CONFIG, channel };
+  return applyEnv({ ...DEFAULT_MODEL_CONFIG, channel });
 }
 
 /** همه‌ی ردیف‌های کانال‌ها (برای پنل مدل‌ها). */

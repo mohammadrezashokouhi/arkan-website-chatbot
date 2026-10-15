@@ -53,11 +53,11 @@
 ```
 src/lib/rag/            ← مغز مرکزی (مستقل از کانال)
   config.ts             پیکربندی مدل/embedding/پرسونا از دیتابیس
-  embeddings.ts         تبدیل متن به بردار (Cohere چندزبانه)
+  embeddings.ts         تبدیل متن به بردار (Multilingual E5 روی Hugging Face)
   chunking.ts           قطعه‌بندی متن
   ingest.ts             استخراج متن چندفرمتی + ذخیره در pgvector
   retrieve.ts           جست‌وجوی برداری + citations
-  generate.ts           تولید استریمی از طریق OpenRouter
+  generate.ts           تولید استریمی Qwen از طریق OpenRouter
   chat.ts               ارکستریتور (handleChatTurn / getReplyText) + ابزارها
   policy.ts             محافظ تزریق پرامپت، ماسک اطلاعات تماس، ساعات کاری
   ratelimit.ts          سقف نرخ پایدار (شمارش در دیتابیس، نه در حافظه)
@@ -73,8 +73,8 @@ src/lib/rag/            ← مغز مرکزی (مستقل از کانال)
 ## استک فنی
 - **Next.js 14** (App Router) + **TypeScript** + **Tailwind** (RTL کامل)
 - **Supabase + pgvector** برای ذخیره و جست‌وجوی برداری (مشترک با وب‌سایت)
-- **OpenRouter** برای تولید پاسخ (یک کلید، همه‌ی مدل‌ها — پیش‌فرض Gemini 3.5 Flash، استریمی)
-- **Cohere** `embed-multilingual-v3.0` برای embedding چندزبانه (۱۰۲۴ بعدی)
+- **OpenRouter + Qwen3.8 27B Free** برای تولید پاسخ open-weight، استریمی و function calling
+- **Hugging Face + Multilingual E5 Large** برای embedding چندزبانهٔ ابری (۱۰۲۴ بعدی)
 - **Telegram Bot API** با Webhook
 - آماده‌ی استقرار روی **Vercel**
 
@@ -134,8 +134,10 @@ npm run dev
 ```
 NEXT_PUBLIC_SUPABASE_URL= / SUPABASE_SERVICE_ROLE_KEY=   # دیتابیس
 ADMIN_PASSWORD= / ADMIN_SESSION_SECRET=                  # ورود پنل
-OPENROUTER_API_KEY=                                      # تولید پاسخ
-COHERE_API_KEY= (+ EMBEDDING_PROVIDER/MODEL)             # embedding
+AI_PROVIDER=openrouter / GENERATION_MODEL=qwen/qwen3.8-27b:free
+OPENROUTER_API_KEY= / OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+HF_TOKEN= / EMBEDDING_PROVIDER=huggingface
+EMBEDDING_MODEL=intfloat/multilingual-e5-large / EMBEDDING_DIMENSIONS=1024
 TELEGRAM_BOT_TOKEN= / TELEGRAM_WEBHOOK_SECRET=           # کانال تلگرام
 RESEND_API_KEY= / RESEND_FROM=                           # ایمیل کمپین، پروپوزال و قرارداد (دامنه‌ی تأییدشده در Resend)
 CRM_NOTIFY_EMAIL=                                        # (اختیاری) اعلان پاسخ کلاینت و نسخه‌ی تأییدشده
@@ -156,7 +158,7 @@ CRM_NOTIFY_EMAIL=                                        # (اختیاری) اع
 
 ### بارگذاری پایگاه دانش
 ```bash
-node scripts/ingest-kb.mjs   # اسناد knowledge-base را با Cohere ایندکس می‌کند
+node scripts/ingest-kb.mjs   # اسناد knowledge-base را با Multilingual E5 ایندکس می‌کند
 ```
 
 ### نصب ویجت روی هر سایت
