@@ -70,20 +70,20 @@ test('successful lead capture persists consent and an unguessable tracking code'
  assert.ok(row.consent_at);
 });
 
-test('Hugging Face embeddings use E5 prefixes and validate 1024 dimensions', async () => {
+test('OpenRouter embeddings use retrieval prefixes and validate 1024 dimensions', async () => {
  const calls = [];
- const embeddings = load('src/lib/rag/embeddings.ts', {}, { HF_TOKEN: 'hf_test' });
+ const embeddings = load('src/lib/rag/embeddings.ts', {}, { OPENROUTER_API_KEY: 'or_test' });
  const oldFetch = globalThis.fetch;
  globalThis.fetch = async (url, init) => {
   calls.push([url, init.headers, JSON.parse(init.body)]);
-  return { ok: true, json: async () => [Array(1024).fill(0.1)] };
+  return { ok: true, json: async () => ({ data: [{ index: 0, embedding: Array(1024).fill(0.1) }] }) };
  };
  try {
-  const result = await embeddings.embed(['سلام'], 'query', { provider:'huggingface', model:'intfloat/multilingual-e5-large', dimensions:1024 });
+  const result = await embeddings.embed(['سلام'], 'query', { provider:'openrouter', model:'liquid/lfm-2.5-embedding-350m:free', dimensions:1024 });
   assert.equal(result[0].length, 1024);
-  assert.equal(calls[0][0], 'https://router.huggingface.co/hf-inference/models/intfloat/multilingual-e5-large');
-  assert.equal(calls[0][1].Authorization, 'Bearer hf_test');
-  assert.deepEqual(calls[0][2].inputs, ['query: سلام']);
-  assert.equal(calls[0][2].normalize, true);
+  assert.equal(calls[0][0], 'https://openrouter.ai/api/v1/embeddings');
+  assert.equal(calls[0][1].Authorization, 'Bearer or_test');
+  assert.deepEqual(calls[0][2].input, ['query: سلام']);
+  assert.equal(calls[0][2].dimensions, 1024);
  } finally { globalThis.fetch = oldFetch; }
 });

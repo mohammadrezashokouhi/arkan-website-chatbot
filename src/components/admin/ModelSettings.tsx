@@ -8,7 +8,7 @@ const MODEL_GROUPS: { provider: string; models: { slug: string; label: string }[
   {
     provider: "OpenRouter — مدل open-weight رایگان",
     models: [
-      { slug: "qwen/qwen3.8-27b:free", label: "Qwen3.8 27B Free (پیشنهادی)" },
+      { slug: "openrouter/free", label: "Free Models Router (پیشنهادی)" },
     ],
   },
   { provider: "Anthropic (Claude)", models: [{ slug: "anthropic/claude-haiku-4.5", label: "Claude Haiku 4.5" }] },
@@ -71,7 +71,7 @@ export default function ModelSettings({
     <div className="space-y-8">
       <div>
         <h1 className="font-heading text-h3 font-bold text-pine">مدل‌ها و بازیابی</h1>
-        <p className="mt-1 text-caption text-slate">مدل پیش‌فرض Qwen3.8 از طریق OpenRouter اجرا می‌شود و برای استقرار serverless روی Vercel مناسب است.</p>
+        <p className="mt-1 text-caption text-slate">مسیر رایگان OpenRouter در هر درخواست یک مدل رایگانِ سازگار با قابلیت‌های لازم انتخاب می‌کند و برای Vercel مناسب است.</p>
       </div>
 
       {/* هر کانال پیکربندی مستقل دارد: ویجت می‌تواند مدل ارزان‌تر و پاسخ کوتاه‌تر داشته باشد. */}

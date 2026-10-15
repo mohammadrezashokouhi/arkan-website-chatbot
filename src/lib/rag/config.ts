@@ -7,7 +7,7 @@ import { getSupabaseAdmin } from "@/lib/supabase";
  */
 
 export type EmbeddingConfig = {
-  provider: string; // huggingface | cohere
+  provider: string; // openrouter | huggingface | cohere
   model: string;
   dimensions: number;
   chunk_size: number;
@@ -29,8 +29,8 @@ export type ModelConfig = {
 };
 
 export const DEFAULT_EMBEDDING_CONFIG: EmbeddingConfig = {
-  provider: "huggingface",
-  model: "intfloat/multilingual-e5-large",
+  provider: "openrouter",
+  model: "liquid/lfm-2.5-embedding-350m:free",
   dimensions: 1024,
   chunk_size: 500,
   chunk_overlap: 50,
@@ -43,7 +43,7 @@ export const DEFAULT_EMBEDDING_CONFIG: EmbeddingConfig = {
 export const DEFAULT_MODEL_CONFIG: ModelConfig = {
   channel: "web",
   provider: "openrouter",
-  active_model: "qwen/qwen3.8-27b:free",
+  active_model: "openrouter/free",
   temperature: 0.4,
   max_tokens: 2000,
   top_p: 1,

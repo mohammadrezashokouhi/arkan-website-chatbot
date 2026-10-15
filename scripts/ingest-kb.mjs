@@ -3,12 +3,12 @@
  * بارگذاری انبوه پایگاه دانش آرکان در سیستم RAG (Supabase + pgvector).
  *
  * این اسکریپت بر اساس knowledge-base/manifest.json هر سند را با عنوان فارسی و
- * تگ موضوعی‌اش می‌خواند، متن را بر اساس فرمت استخراج می‌کند، قطعه‌بندی و با Hugging Face
+ * تگ موضوعی‌اش می‌خواند، متن را بر اساس فرمت استخراج می‌کند، قطعه‌بندی و با OpenRouter
  * embed می‌کند و در جداول documents/chunks می‌نویسد.
  *
  * اجرا (از ریشه‌ی پروژه):  node scripts/ingest-kb.mjs
  * متغیرها از .env.local خوانده می‌شوند: NEXT_PUBLIC_SUPABASE_URL,
- * SUPABASE_SERVICE_ROLE_KEY, HF_TOKEN, EMBEDDING_MODEL.
+ * SUPABASE_SERVICE_ROLE_KEY, OPENROUTER_API_KEY, EMBEDDING_MODEL.
  *
  * نکته: نسخه‌های تکراریِ صرفاً فرمتی (docx معادل md، و pdf معادل html بروشور) رد
  * می‌شوند تا قطعه‌های تکراری وارد سیستم نشوند.
@@ -36,12 +36,12 @@ function loadEnv() {
 const env = { ...loadEnv(), ...process.env };
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
-const HF_TOKEN = env.HF_TOKEN;
-const EMBEDDING_MODEL = env.EMBEDDING_MODEL || "intfloat/multilingual-e5-large";
+const OPENROUTER_API_KEY = env.OPENROUTER_API_KEY;
+const EMBEDDING_MODEL = env.EMBEDDING_MODEL || "liquid/lfm-2.5-embedding-350m:free";
 const EMBEDDING_DIMENSIONS = Number(env.EMBEDDING_DIMENSIONS || 1024);
 
 if (!SUPABASE_URL || !SERVICE_KEY) throw new Error("متغیرهای Supabase در .env.local نیست.");
-if (!HF_TOKEN) throw new Error("متغیر HF_TOKEN در .env.local نیست.");
+if (!OPENROUTER_API_KEY) throw new Error("متغیر OPENROUTER_API_KEY در .env.local نیست.");
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
   db: { schema: "arkan" }, // جدول‌های آرکان در اسکیمای arkan هستند، نه public
@@ -149,20 +149,22 @@ function splitText(raw, chunkSizeTokens = 500, overlapTokens = 50) {
   return chunks;
 }
 
-// ── embedding ابری با Hugging Face Inference ──
+// ── embedding رایگان با OpenRouter ──
 async function embed(texts) {
-  const model = encodeURIComponent(EMBEDDING_MODEL).replace(/%2F/gi, "/");
-  const res = await fetch(`https://router.huggingface.co/hf-inference/models/${model}`, {
+  const res = await fetch("https://openrouter.ai/api/v1/embeddings", {
     method: "POST",
-    headers: { Authorization: `Bearer ${HF_TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ inputs: texts.map((text) => `passage: ${text}`), normalize: true, truncate: true }),
+    headers: { Authorization: `Bearer ${OPENROUTER_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ model: EMBEDDING_MODEL, input: texts.map((text) => `document: ${text}`), dimensions: EMBEDDING_DIMENSIONS }),
   });
   const j = await res.json();
-  if (!res.ok) throw new Error(`Hugging Face ${res.status}: ${JSON.stringify(j).slice(0, 200)}`);
-  if (!Array.isArray(j) || j.some((v) => !Array.isArray(v) || v.length !== EMBEDDING_DIMENSIONS)) {
-    throw new Error(`بردار Hugging Face باید ${EMBEDDING_DIMENSIONS} بعد داشته باشد.`);
+  if (!res.ok) throw new Error(`OpenRouter ${res.status}: ${JSON.stringify(j).slice(0, 200)}`);
+  const vectors = Array.isArray(j.data)
+    ? [...j.data].sort((a, b) => a.index - b.index).map((row) => row.embedding)
+    : [];
+  if (vectors.length !== texts.length || vectors.some((v) => !Array.isArray(v) || v.length !== EMBEDDING_DIMENSIONS)) {
+    throw new Error(`بردار OpenRouter باید ${EMBEDDING_DIMENSIONS} بعد داشته باشد.`);
   }
-  return j;
+  return vectors;
 }
 
 // ── اجرا ──

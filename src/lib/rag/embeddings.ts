@@ -3,7 +3,7 @@ import type { EmbeddingConfig } from "./config";
 
 /**
  * تبدیل متن به بردار (embedding) — provider-agnostic.
- * پیش‌فرض، Hugging Face Inference است؛ Cohere برای سازگاری با تنظیمات قدیمی باقی مانده است.
+ * پیش‌فرض، Embeddings API اوپن‌روتر است؛ ارائه‌دهنده‌های قدیمی برای سازگاری باقی مانده‌اند.
  *
  * inputType:
  *   - 'query'    → برای embed کردن سؤال کاربر هنگام جست‌وجو
@@ -19,6 +19,8 @@ export async function embed(
   if (texts.length === 0) return [];
 
   switch (config.provider) {
+    case "openrouter":
+      return embedOpenRouter(texts, inputType, config);
     case "huggingface":
       return embedHuggingFace(texts, inputType, config);
     case "cohere":
@@ -28,6 +30,47 @@ export async function embed(
         `ارائه‌دهنده‌ی embedding پشتیبانی‌نشده در این نسخه: ${config.provider}`
       );
   }
+}
+
+async function embedOpenRouter(
+  texts: string[],
+  inputType: EmbedInputType,
+  config: EmbeddingConfig
+): Promise<number[][]> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    throw new Error("کلید OPENROUTER_API_KEY تنظیم نشده است؛ امکان ساخت embedding وجود ندارد.");
+  }
+
+  const prefix = inputType === "query" ? "query: " : "document: ";
+  const res = await fetch("https://openrouter.ai/api/v1/embeddings", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+      "X-Title": "Rayan Digital Assistant",
+    },
+    body: JSON.stringify({
+      model: config.model,
+      input: texts.map((text) => `${prefix}${text}`),
+      dimensions: config.dimensions,
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`خطای OpenRouter embedding (${res.status}): ${body.slice(0, 300)}`);
+  }
+  const json = await res.json();
+  const rows: { index: number; embedding: number[] }[] | undefined = json?.data;
+  if (!Array.isArray(rows) || rows.length !== texts.length) {
+    throw new Error("پاسخ OpenRouter فاقد بردارهای معتبر بود.");
+  }
+  const vectors = [...rows].sort((a, b) => a.index - b.index).map((row) => row.embedding);
+  if (vectors.some((vector) => !Array.isArray(vector) || vector.length !== config.dimensions)) {
+    throw new Error(`ابعاد embedding با pgvector سازگار نیست؛ مقدار مورد انتظار ${config.dimensions} است.`);
+  }
+  return vectors;
 }
 
 async function embedHuggingFace(
