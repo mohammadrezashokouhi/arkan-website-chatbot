@@ -15,7 +15,7 @@ async function getAllowedDomains(): Promise<string[]> {
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !key) return [];
     const res = await fetch(`${url}/rest/v1/widget_config?select=allowed_domains&limit=1`, {
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
+      headers: { apikey: key, Authorization: `Bearer ${key}`, "Accept-Profile": "arkan" },
     });
     const rows = await res.json();
     const domains: string[] = Array.isArray(rows) && rows[0]?.allowed_domains ? rows[0].allowed_domains : [];

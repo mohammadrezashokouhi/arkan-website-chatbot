@@ -16,15 +16,15 @@ export type WidgetConfig = {
 
 export const DEFAULT_WIDGET_CONFIG: WidgetConfig = {
   enabled: true,
-  primary_color: "#143A32",
+  primary_color: "#D6242A",
   position: "left",
   welcome_message:
-    "سلام! من دستیار هوشمند آرکان هستم. چطور می‌توانم درباره‌ی خدمات و رشد کسب‌وکارتان کمک کنم؟",
+    "سلام! من دستیار هوشمند رایان دیجیتال هستم. چطور می‌توانم درباره‌ی خدمات و رشد کسب‌وکارتان کمک کنم؟",
   launcher_text: "گفت‌وگو با مشاور",
   suggested_questions: [
-    "آرکان دقیقاً چه کمکی به کسب‌وکار من می‌کند؟",
-    "متدولوژی «چهار رکن» چیست؟",
-    "هزینه و مدت بسته‌های مشاوره چقدر است؟",
+    "رایان دیجیتال دقیقاً چه کمکی به کسب‌وکار من می‌کند؟",
+    "خدمات طراحی سایت و سئو چیست؟",
+    "چطور درخواست مشاوره ثبت کنم؟",
     "برای شروع همکاری باید چه کار کنم؟",
   ],
   allowed_domains: [],
@@ -39,7 +39,7 @@ export async function getWidgetConfig(): Promise<WidgetConfig> {
     .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (!data) return DEFAULT_WIDGET_CONFIG;
+  if (!data || data.welcome_message?.includes("آرکان")) return DEFAULT_WIDGET_CONFIG;
   return { ...DEFAULT_WIDGET_CONFIG, ...data } as WidgetConfig;
 }
 

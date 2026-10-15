@@ -1,3 +1,4 @@
+import { isRateLimited } from "@/lib/rag/ratelimit";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { getReplyText } from "@/lib/rag/chat";
@@ -6,45 +7,33 @@ import { sendMessage, sendChatAction, answerCallbackQuery, type InlineButton } f
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const SITE_URL = "https://arkan-website-chatbot.vercel.app";
-
-// ── rate-limit ساده per chat ──
-const WINDOW_MS = 60_000;
-const MAX_PER_WINDOW = 15;
-const hits = new Map<number, number[]>();
-function rateLimited(chatId: number): boolean {
-  const now = Date.now();
-  const arr = (hits.get(chatId) ?? []).filter((t) => now - t < WINDOW_MS);
-  arr.push(now);
-  hits.set(chatId, arr);
-  return arr.length > MAX_PER_WINDOW;
-}
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
 
 // دکمه‌های پاسخ سریع (callback) + لینک سایت
 const QUICK_QUESTIONS: Record<string, string> = {
-  q_services: "خدمات آرکان شامل چه مواردی است؟",
-  q_pillars: "متدولوژی «چهار رکن» آرکان چیست؟",
+  q_services: "خدمات رایان دیجیتال شامل چه مواردی است؟",
+  q_pillars: "خدمات طراحی سایت و سئو رایان دیجیتال چیست؟",
   q_pricing: "هزینه و مدت بسته‌های مشاوره چقدر است؟",
-  q_process: "فرایند همکاری با آرکان چطور پیش می‌رود؟",
+  q_process: "فرایند همکاری با رایان دیجیتال چطور پیش می‌رود؟",
 };
 function startKeyboard(): InlineButton[][] {
   return [
-    [{ text: "خدمات آرکان", callback_data: "q_services" }, { text: "چهار رکن", callback_data: "q_pillars" }],
+    [{ text: "خدمات رایان دیجیتال", callback_data: "q_services" }, { text: "طراحی سایت", callback_data: "q_pillars" }],
     [{ text: "قیمت‌ها", callback_data: "q_pricing" }, { text: "فرایند همکاری", callback_data: "q_process" }],
-    [{ text: "📝 ثبت درخواست مشاوره", url: `${SITE_URL}/#consultation` }],
+    [{ text: "📝 ثبت درخواست مشاوره", url: `${SITE_URL}/chat` }],
   ];
 }
 
 const WELCOME =
-  "سلام! 👋 من دستیار هوشمند آرکان هستم؛ مشاور استراتژی و رشد کسب‌وکار.\n\nسؤال‌تان را درباره‌ی خدمات، متدولوژی چهار رکن، قیمت‌ها یا فرایند همکاری بنویسید — یا یکی از گزینه‌های زیر را انتخاب کنید.";
+  "سلام! 👋 من دستیار هوشمند رایان دیجیتال هستم؛ مشاور استراتژی و رشد کسب‌وکار.\n\nسؤال‌تان را درباره‌ی خدمات، طراحی سایت و سئو، قیمت‌ها یا فرایند همکاری بنویسید — یا یکی از گزینه‌های زیر را انتخاب کنید.";
 const HELP =
-  "من می‌توانم درباره‌ی آرکان به شما کمک کنم:\n\n• سؤال‌تان را مستقیم بنویسید.\n• /start — شروع دوباره و منوی گزینه‌ها\n• /reset — پاک‌کردن حافظه‌ی گفتگو و شروع تازه\n\nهر وقت آماده بودید، درخواست مشاوره‌ی رایگان ثبت کنید: " +
-  `${SITE_URL}/#consultation`;
+  "من می‌توانم درباره‌ی رایان دیجیتال به شما کمک کنم:\n\n• سؤال‌تان را مستقیم بنویسید.\n• /start — شروع دوباره و منوی گزینه‌ها\n• /reset — پاک‌کردن حافظه‌ی گفتگو و شروع تازه\n\nهر وقت آماده بودید، درخواست مشاوره‌ی رایگان ثبت کنید: " +
+  `${SITE_URL}/chat`;
 
 export async function POST(req: Request) {
   // امنیت: تأیید secret تلگرام
   const secret = req.headers.get("x-telegram-bot-api-secret-token");
-  if (process.env.TELEGRAM_WEBHOOK_SECRET && secret !== process.env.TELEGRAM_WEBHOOK_SECRET) {
+  if (!process.env.TELEGRAM_WEBHOOK_SECRET || secret !== process.env.TELEGRAM_WEBHOOK_SECRET) {
     return new Response("forbidden", { status: 401 });
   }
 
@@ -78,6 +67,11 @@ async function handleMessage(msg: TelegramMessage) {
     return;
   }
 
+  if (text.length > 2000) {
+    await sendMessage(chatId, "لطفاً پیام را کوتاه‌تر از ۲۰۰۰ نویسه بنویسید.");
+    return;
+  }
+
   // دستورها
   if (text.startsWith("/start")) {
     if (supabase) {
@@ -93,11 +87,11 @@ async function handleMessage(msg: TelegramMessage) {
   }
   if (text.startsWith("/reset")) {
     if (supabase) await resetConversation(supabase, chatId);
-    await sendMessage(chatId, "حافظه‌ی گفتگو پاک شد. می‌توانید از نو شروع کنید 🙂", startKeyboard());
+    await sendMessage(chatId, "گفتگوی قبلی بسته شد. می‌توانید از نو شروع کنید 🙂", startKeyboard());
     return;
   }
 
-  if (rateLimited(chatId)) {
+  if (await isRateLimited(`telegram:${chatId}`, 15)) {
     await sendMessage(chatId, "کمی آرام‌تر 🙏 لطفاً چند لحظه صبر کنید و دوباره بپرسید.");
     return;
   }
@@ -111,7 +105,7 @@ async function handleCallback(cb: TelegramCallback) {
   if (!chatId) return;
   const question = QUICK_QUESTIONS[cb.data ?? ""];
   if (!question) return;
-  if (rateLimited(chatId)) {
+  if (await isRateLimited(`telegram:${chatId}`, 15)) {
     await sendMessage(chatId, "کمی آرام‌تر 🙏 لطفاً چند لحظه صبر کنید.");
     return;
   }
@@ -135,7 +129,7 @@ async function answerQuestion(chatId: number, question: string, from?: TelegramU
     userMessage: question,
   });
 
-  await sendMessage(chatId, text, [[{ text: "📝 ثبت درخواست مشاوره", url: `${SITE_URL}/#consultation` }]]);
+  await sendMessage(chatId, text, [[{ text: "📝 ثبت درخواست مشاوره", url: `${SITE_URL}/chat` }]]);
 }
 
 // ── نگاشت کاربر و گفتگو ──────────────────────────────────────────

@@ -3,7 +3,7 @@ import WidgetChat from "@/components/chat/WidgetChat";
 import { getWidgetConfig } from "@/lib/rag/widget";
 
 export const metadata: Metadata = {
-  title: "دستیار آرکان",
+  title: "دستیار رایان دیجیتال",
   robots: { index: false, follow: false },
 };
 

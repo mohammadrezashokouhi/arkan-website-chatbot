@@ -1,3 +1,5 @@
+import { verifyConversation } from "@/lib/rag/conversation-token";
+import { z } from "zod";
 import { getSupabaseAdmin } from "@/lib/supabase";
 
 export const runtime = "nodejs";
@@ -7,17 +9,11 @@ export const runtime = "nodejs";
  * بدنه: { conversationId: string, rating: "up" | "down", comment?: string }
  */
 export async function POST(req: Request) {
-  let body: { conversationId?: string; rating?: string; comment?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return new Response("بدنه‌ی نامعتبر.", { status: 400 });
-  }
-
-  const { conversationId, rating, comment } = body;
-  if (!conversationId || (rating !== "up" && rating !== "down")) {
-    return new Response("ورودی نامعتبر.", { status: 400 });
-  }
+  const parsed = z.object({ conversationId: z.string().max(160), rating: z.enum(["up", "down"]), comment: z.string().max(500).optional() }).safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return new Response("ورودی نامعتبر.", { status: 400 });
+  const { rating, comment } = parsed.data;
+  const conversationId = verifyConversation(parsed.data.conversationId, "web") || verifyConversation(parsed.data.conversationId, "widget");
+  if (!conversationId) return new Response("نشست نامعتبر.", { status: 403 });
 
   const supabase = getSupabaseAdmin();
   if (!supabase) return new Response("سرویس در دسترس نیست.", { status: 503 });

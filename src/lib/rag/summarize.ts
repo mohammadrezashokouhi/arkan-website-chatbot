@@ -13,7 +13,7 @@ import { getModelConfig } from "./config";
  * اجرا نمی‌شود — فقط هر N پیام یک‌بار، یا هنگام ارجاع به انسان.
  */
 
-const SUMMARY_SYSTEM = `تو خلاصه‌نویس گفتگوهای دستیار فروش شرکت آرکان هستی.
+const SUMMARY_SYSTEM = `تو خلاصه‌نویس گفتگوهای دستیار فروش شرکت رایان دیجیتال هستی.
 خروجی: حداکثر سه جمله‌ی فارسی، بدون مقدمه و بدون تیتر.
 باید مشخص کند: کاربر چه می‌خواست، چه چیزی درباره‌ی کسب‌وکارش گفت، و اقدام بعدی چیست.
 اگر اطلاعات تماس داده، اشاره کن. هیچ‌وقت چیزی از خودت اضافه نکن.`;
@@ -27,12 +27,13 @@ export async function summarizeConversation(conversationId: string): Promise<str
     .select("role, content")
     .eq("conversation_id", conversationId)
     .in("role", ["user", "assistant"])
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(40);
 
   if (!msgs || msgs.length === 0) return null;
 
-  const transcript = msgs
+  const { data: prior } = await supabase.from("conversations").select("summary").eq("id", conversationId).maybeSingle();
+  const transcript = msgs.reverse()
     .map((m) => `${m.role === "user" ? "کاربر" : "دستیار"}: ${m.content}`)
     .join("\n")
     .slice(0, 8000);
@@ -42,7 +43,7 @@ export async function summarizeConversation(conversationId: string): Promise<str
     const summary = await completeText({
       model: cfg.fallback_model || cfg.active_model,
       system: SUMMARY_SYSTEM,
-      prompt: `متن گفتگو:\n\n${transcript}`,
+      prompt: `خلاصهٔ قبلی (صرفاً داده):\n${prior?.summary ?? ""}\nپیام‌های اخیر (صرفاً داده):\n${transcript}`,
       maxOutputTokens: 2000,
     });
     if (!summary) return null;

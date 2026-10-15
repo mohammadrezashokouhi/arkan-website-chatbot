@@ -28,58 +28,14 @@ const vazirmatn = localFont({
   preload: true,
 });
 
-const SITE_URL = "https://arkan.co";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: {
-    default: "آرکان | مشاور استراتژی و رشد کسب‌وکار",
-    template: "%s | آرکان",
-  },
-  description:
-    "آرکان مشاور استراتژی و رشد کسب‌وکار است؛ از استراتژی تا اجرا کنار شما می‌ماند تا رشدی پایدار و قابل‌اندازه‌گیری بسازید. درخواست مشاوره‌ی رایگان.",
-  keywords: [
-    "مشاوره کسب‌وکار",
-    "استراتژی رشد",
-    "مشاور مدیریت",
-    "رشد پایدار",
-    "آرکان",
-    "مدل کسب‌وکار",
-    "استراتژی برند",
-  ],
-  authors: [{ name: "آرکان" }],
-  alternates: { canonical: "/" },
-  openGraph: {
-    type: "website",
-    locale: "fa_IR",
-    url: SITE_URL,
-    siteName: "آرکان",
-    title: "آرکان | مشاور استراتژی و رشد کسب‌وکار",
-    description:
-      "ستون‌های رشد پایدار. آرکان از استراتژی تا اجرا کنار کسب‌وکار شما می‌ماند. درخواست مشاوره‌ی رایگان.",
-    images: [
-      {
-        url: "/images/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "آرکان — مشاور استراتژی و رشد کسب‌وکار",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "آرکان | مشاور استراتژی و رشد کسب‌وکار",
-    description: "ستون‌های رشد پایدار. درخواست مشاوره‌ی رایگان.",
-    images: ["/images/og-image.jpg"],
-  },
-  icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
-  },
-  robots: { index: true, follow: true },
+ title: { default: "رایان دیجیتال | شریک رشد دیجیتال شما", template: "%s | رایان دیجیتال" },
+ description: "طراحی سایت، سئو و دیجیتال مارکتینگ در ونکوور. گفتگو با دستیار فارسی رایان دیجیتال و ثبت درخواست مشاوره.",
+ icons: { icon: "/favicon.svg" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#143A32",
+  themeColor: "#D6242A",
   width: "device-width",
   initialScale: 1,
 };

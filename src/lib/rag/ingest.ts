@@ -72,7 +72,7 @@ export async function ingestDocument(source: IngestSource): Promise<IngestResult
       source_type: sourceType,
       source_url: sourceUrl,
       status: "processing",
-      tags: source.tags ?? null,
+      tags: Array.from(new Set(["rayan", ...(source.tags ?? [])])),
     })
     .select("id")
     .single();

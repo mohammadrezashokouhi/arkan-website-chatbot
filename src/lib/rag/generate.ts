@@ -16,8 +16,8 @@ export function getOpenRouter() {
     apiKey: process.env.OPENROUTER_API_KEY ?? "",
     headers: {
       // برای رتبه‌بندی OpenRouter (اختیاری)
-      "HTTP-Referer": "https://arkan-website-chatbot.vercel.app",
-      "X-Title": "Arkan Consultant",
+      "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+      "X-Title": "Rayan Digital Assistant",
     },
     // محدودکردن reasoning به سطح پایین برای همه‌ی مدل‌ها.
     // برخی مدل‌ها (مثل Gemini 3.5 Flash) reasoning اجباری دارند و در غیر این صورت ممکن است

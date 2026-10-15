@@ -33,7 +33,7 @@ function loadEnv() {
   }
   return env;
 }
-const env = loadEnv();
+const env = { ...loadEnv(), ...process.env };
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 const COHERE_API_KEY = env.COHERE_API_KEY;
@@ -187,7 +187,7 @@ async function main() {
 
       const { data: doc, error: de } = await supabase
         .from("documents")
-        .insert({ title: d.title, source_type: d.format, status: "processing", tags: d.topic ? [d.topic] : null })
+        .insert({ title: d.title, source_type: d.format, status: "processing", tags: ["rayan", ...(d.topic ? [d.topic] : [])] })
         .select("id").single();
       if (de) throw new Error(de.message);
 

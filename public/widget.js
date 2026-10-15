@@ -1,7 +1,7 @@
 /*
- * ویجت چت آرکان — اسنیپت قابل‌جاسازی
+ * ویجت چت رایان دیجیتال — اسنیپت قابل‌جاسازی
  * نصب در هر سایت:
- *   <script src="https://arkan-website-chatbot.vercel.app/widget.js" async></script>
+ *   <script src="https://YOUR-CHAT-DOMAIN/widget.js" async></script>
  * یک حباب شناور می‌سازد که گفتگو را داخل یک iframe امن باز می‌کند.
  */
 (function () {
@@ -11,12 +11,12 @@
     try {
       return new URL(current.src).origin;
     } catch (e) {
-      return "https://arkan-website-chatbot.vercel.app";
+      return window.location.origin;
     }
   })();
 
-  if (window.__arkanWidgetLoaded) return;
-  window.__arkanWidgetLoaded = true;
+  if (window.__rayanWidgetLoaded) return;
+  window.__rayanWidgetLoaded = true;
 
   fetch(BASE + "/api/widget-config")
     .then(function (r) {
@@ -31,8 +31,8 @@
     });
 
   function init(cfg) {
-    var color = cfg.primary_color || "#143A32";
-    var bone = "#F7F3EC";
+    var color = cfg.primary_color || "#D6242A";
+    var bone = "#FAF7F5";
     var side = cfg.position === "right" ? "right" : "left";
     var launcherText = cfg.launcher_text || "گفت‌وگو با مشاور";
     var isOpen = false;
@@ -46,7 +46,8 @@
 
     var iframe = document.createElement("iframe");
     iframe.src = BASE + "/widget";
-    iframe.title = "دستیار آرکان";
+    iframe.title = "دستیار رایان دیجیتال";
+    iframe.setAttribute("loading", "lazy");
     iframe.style.cssText =
       "border:0;width:380px;height:600px;max-width:calc(100vw - 40px);" +
       "max-height:calc(100vh - 120px);border-radius:16px;background:" + bone + ";" +
@@ -64,6 +65,8 @@
     btn.onmouseleave = function () { btn.style.transform = "none"; };
 
     function render() {
+      btn.setAttribute("aria-expanded", String(isOpen));
+      btn.setAttribute("aria-label", isOpen ? "بستن گفتگو" : launcherText);
       if (isOpen) {
         btn.innerHTML = closeSvg();
         btn.style.padding = "13px";

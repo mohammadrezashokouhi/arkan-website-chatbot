@@ -36,7 +36,7 @@ export async function retrieve(
   // با فعال‌بودن reranker عمداً بیشتر می‌گیریم تا بازچینش چیزی برای انتخاب داشته باشد.
   const matchCount = cfg.reranker_enabled ? Math.min(cfg.top_k * 3, 30) : cfg.top_k;
 
-  const { data, error } = await supabase.rpc("match_chunks", {
+  const { data, error } = await supabase.rpc("match_rayan_chunks", {
     query_embedding: queryVector,
     match_count: matchCount,
     similarity_threshold: cfg.similarity_threshold,

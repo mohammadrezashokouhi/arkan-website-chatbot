@@ -40,8 +40,7 @@ export function useArkanChat(opts: { channel?: string; storageKey?: string } = {
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem(storageKey);
-    if (saved) setConversationId(saved);
+    try { const saved = localStorage.getItem(storageKey); if (saved) setConversationId(saved); } catch { /* storage unavailable */ }
   }, [storageKey]);
 
   const stop = useCallback(() => {
@@ -90,7 +89,7 @@ export function useArkanChat(opts: { channel?: string; storageKey?: string } = {
         const meta = metaB64 ? decodeMeta(metaB64) : { conversationId: null, sources: [] };
         if (meta.conversationId) {
           setConversationId(meta.conversationId);
-          localStorage.setItem(storageKey, meta.conversationId);
+          try { localStorage.setItem(storageKey, meta.conversationId); } catch { /* storage unavailable */ }
         }
 
         if (!res.ok || !res.body) {

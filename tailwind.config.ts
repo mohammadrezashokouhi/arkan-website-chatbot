@@ -6,17 +6,17 @@ const config: Config = {
     extend: {
       colors: {
         // پالت برند آرکان (برند گاید)
-        pine: "#143A32", // سبز کاج — اصلی
-        "pine-dark": "#0F2C26", // برای hover دکمه‌ها
-        brass: "#B5853A", // برنجی — تأکید
-        "brass-dark": "#9A6F2E",
-        bone: "#F7F3EC", // استخوانی — پس‌زمینه‌ی روشن
-        sand: "#E7DECF", // شنی — سطوح ثانویه
-        ink: "#15201C", // مرکبی — متن اصلی
-        slate: "#5A5F5B", // خاکستری‌سبز — متن فرعی
+        pine: "#D6242A", // سبز کاج — اصلی
+        "pine-dark": "#B51D23", // برای hover دکمه‌ها
+        brass: "#0F8A6C", // برنجی — تأکید
+        "brass-dark": "#0B6D55",
+        bone: "#FAF7F5", // استخوانی — پس‌زمینه‌ی روشن
+        sand: "#EAE4E0", // شنی — سطوح ثانویه
+        ink: "#1F1F1F", // مرکبی — متن اصلی
+        slate: "#6E6E73", // خاکستری‌سبز — متن فرعی
       },
       fontFamily: {
-        heading: ["var(--font-estedad)", "system-ui", "sans-serif"],
+        heading: ["var(--font-vazirmatn)", "system-ui", "sans-serif"],
         body: ["var(--font-vazirmatn)", "system-ui", "sans-serif"],
       },
       fontSize: {

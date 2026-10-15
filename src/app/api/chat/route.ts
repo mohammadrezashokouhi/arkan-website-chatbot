@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { signConversation, verifyConversation } from "@/lib/rag/conversation-token";
 import { handleChatTurn } from "@/lib/rag/chat";
 import { getChatSettings } from "@/lib/rag/config";
 import { isRateLimited } from "@/lib/rag/ratelimit";
@@ -13,20 +15,12 @@ export async function POST(req: Request) {
     req.headers.get("x-real-ip") ||
     "anon";
 
-  let body: { message?: string; conversationId?: string | null; channel?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return new Response("بدنه‌ی نامعتبر.", { status: 400 });
-  }
-
-  const message = (body.message ?? "").toString().trim();
-  if (!message) {
-    return new Response("پیام خالی است.", { status: 400 });
-  }
-  if (message.length > MAX_MESSAGE_LENGTH) {
-    return new Response("پیام بیش از حد طولانی است.", { status: 400 });
-  }
+  const parsed = z.object({ message: z.string().trim().min(1).max(MAX_MESSAGE_LENGTH), conversationId: z.string().max(160).nullable().optional(), channel: z.enum(["web", "widget"]).default("web") }).safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return new Response("درخواست نامعتبر است.", { status: 400 });
+  const body = parsed.data;
+  const message = body.message;
+  const conversationId = body.conversationId ? verifyConversation(body.conversationId, body.channel) : null;
+  if (body.conversationId && !conversationId) return new Response("نشست معتبر نیست؛ گفتگوی جدیدی شروع کنید.", { status: 403 });
 
   // سقف نرخ از پنل خوانده می‌شود و در دیتابیس شمرده می‌شود (نه درون‌حافظه‌ای).
   const settings = await getChatSettings();
@@ -38,11 +32,19 @@ export async function POST(req: Request) {
   }
 
   try {
-    return await handleChatTurn({
-      conversationId: body.conversationId ?? null,
+    const response = await handleChatTurn({
+      conversationId,
       channel: body.channel ?? "web",
       userMessage: message,
     });
+    const meta = response.headers.get("x-arkan-meta");
+    if (meta) {
+      const data = JSON.parse(Buffer.from(meta, "base64").toString("utf8"));
+      if (data.conversationId) data.conversationId = signConversation(data.conversationId, body.channel);
+      response.headers.set("x-arkan-meta", Buffer.from(JSON.stringify(data)).toString("base64"));
+    }
+    response.headers.set("Cache-Control", "no-store");
+    return response;
   } catch (e) {
     console.error("[/api/chat] خطا:", (e as Error).message);
     return new Response(

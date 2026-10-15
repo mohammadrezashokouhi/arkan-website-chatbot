@@ -1,12 +1,14 @@
 {
-  "name": "arkan-website",
+  "name": "rayan-digital-chatbot",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test scripts/tests/*.test.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.1",
@@ -15,7 +17,7 @@
     "html2canvas-pro": "^2.4.5",
     "jspdf": "^4.2.1",
     "marked": "^14.1.4",
-    "next": "14.2.15",
+    "next": "14.2.35",
     "pdf-parse": "^2.4.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

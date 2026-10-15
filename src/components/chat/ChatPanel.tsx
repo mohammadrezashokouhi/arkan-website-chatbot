@@ -8,9 +8,9 @@ import FeedbackBar from "./FeedbackBar";
 
 // اگر پنل چیزی تعریف نکرده باشد، همین‌ها نمایش داده می‌شوند.
 const FALLBACK_STARTERS = [
-  "آرکان دقیقاً چه کمکی به کسب‌وکار من می‌کند؟",
-  "متدولوژی «چهار رکن» چیست؟",
-  "هزینه و مدت بسته‌های مشاوره چقدر است؟",
+  "رایان دیجیتال دقیقاً چه کمکی به کسب‌وکار من می‌کند؟",
+  "خدمات طراحی سایت و سئو چیست؟",
+  "چطور درخواست مشاوره ثبت کنم؟",
   "برای شروع همکاری باید چه کار کنم؟",
 ];
 
@@ -18,7 +18,7 @@ export default function ChatPanel({ starters }: { starters?: string[] }) {
   const questions = starters && starters.length > 0 ? starters : FALLBACK_STARTERS;
   const { messages, loading, conversationId, send, stop, reset } = useArkanChat({
     channel: "web",
-    storageKey: "arkan_conv",
+    storageKey: "rayan_conv",
   });
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -46,10 +46,10 @@ export default function ChatPanel({ starters }: { starters?: string[] }) {
   const lastAssistantId = [...messages].reverse().find((m) => m.role === "assistant" && !m.error && m.content)?.id;
 
   return (
-    <div className="flex min-h-dvh flex-col bg-bone">
+    <div className="flex h-dvh flex-col bg-bone">
       <header className="sticky top-0 z-10 border-b border-sand bg-bone/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-5 py-3.5">
-          <a href="/" className="rounded-btn" aria-label="آرکان — خانه">
+          <a href="/" className="rounded-btn" aria-label="رایان دیجیتال — خانه">
             <Logo />
           </a>
           <div className="flex items-center gap-2">
@@ -62,17 +62,18 @@ export default function ChatPanel({ starters }: { starters?: string[] }) {
                 گفتگوی جدید
               </button>
             )}
-            <a
-              href="/#consultation"
+            <button
+              type="button"
+              onClick={() => { setInput("می‌خواهم درخواست مشاوره ثبت کنم."); inputRef.current?.focus(); }}
               className="inline-flex items-center gap-1.5 rounded-btn bg-pine px-4 py-2 text-caption font-medium text-bone transition-colors hover:bg-pine-dark"
             >
               درخواست مشاوره
-            </a>
+            </button>
           </div>
         </div>
       </header>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex min-h-full max-w-3xl flex-col px-5 py-6">
           {empty ? (
             <WelcomeScreen questions={questions} onPick={(q) => send(q)} />
@@ -101,7 +102,7 @@ export default function ChatPanel({ starters }: { starters?: string[] }) {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKeyDown}
               rows={1}
-              placeholder="سؤال‌تان را درباره‌ی آرکان بنویسید…"
+              placeholder="سؤال‌تان را درباره‌ی رایان دیجیتال بنویسید…"
               className="max-h-40 flex-1 resize-none bg-transparent px-2 py-2 text-[0.95rem] leading-7 text-ink placeholder:text-slate/60 focus:outline-none"
               aria-label="پیام شما"
             />
@@ -142,9 +143,9 @@ function WelcomeScreen({ questions, onPick }: { questions: string[]; onPick: (q:
       <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-pine text-bone">
         <SparkIcon />
       </span>
-      <h1 className="mt-5 font-heading text-h3 font-bold text-pine">دستیار هوشمند آرکان</h1>
+      <h1 className="mt-5 font-heading text-h3 font-bold text-pine">دستیار هوشمند رایان دیجیتال</h1>
       <p className="mt-2 max-w-md text-body text-slate">
-        درباره‌ی خدمات، متدولوژی چهار رکن و مسیر همکاری بپرسید. هر وقت آماده بودید، درخواست مشاوره‌ی رایگان ثبت کنید.
+        دربارهٔ طراحی سایت، سئو، دیجیتال مارکتینگ و مسیر همکاری بپرسید. هر وقت آماده بودید، درخواست مشاوره‌ی رایگان ثبت کنید.
       </p>
       <div className="mt-8 grid w-full max-w-lg gap-3 sm:grid-cols-2">
         {questions.map((q) => (

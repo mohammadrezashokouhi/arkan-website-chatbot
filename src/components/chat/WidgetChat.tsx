@@ -5,7 +5,7 @@ import { useArkanChat, type ChatMsg } from "@/lib/useArkanChat";
 import { renderBold } from "./format";
 import FeedbackBar from "./FeedbackBar";
 
-const SITE_URL = "https://arkan-website-chatbot.vercel.app";
+const SITE_URL = "";
 
 export default function WidgetChat({
   welcomeMessage,
@@ -18,7 +18,7 @@ export default function WidgetChat({
 }) {
   const { messages, loading, conversationId, send, stop, reset } = useArkanChat({
     channel: "widget",
-    storageKey: "arkan_widget_conv",
+    storageKey: "rayan_widget_conv",
   });
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -44,7 +44,7 @@ export default function WidgetChat({
           <SparkIcon />
         </span>
         <div className="leading-tight">
-          <p className="font-heading text-[0.95rem] font-bold">دستیار آرکان</p>
+          <p className="font-heading text-[0.95rem] font-bold">دستیار رایان دیجیتال</p>
           <p className="text-[0.7rem] opacity-80">معمولاً سریع پاسخ می‌دهد</p>
         </div>
         {messages.length > 0 && (
@@ -78,7 +78,7 @@ export default function WidgetChat({
         )}
         {empty && suggestedQuestions.length === 0 && (
           <p className="px-1 pt-1 text-[0.75rem] text-slate">
-            می‌توانید درباره‌ی خدمات، قیمت‌ها، متدولوژی چهار رکن یا فرایند همکاری بپرسید.
+            می‌توانید درباره‌ی خدمات، قیمت‌ها، طراحی سایت و سئو یا فرایند همکاری بپرسید.
           </p>
         )}
 
@@ -98,7 +98,7 @@ export default function WidgetChat({
       {/* CTA + ورودی */}
       <div className="border-t border-sand bg-bone px-3 pb-3 pt-2">
         <a
-          href={`${SITE_URL}/#consultation`}
+          href={`${SITE_URL}/chat`}
           target="_blank"
           rel="noopener noreferrer"
           className="mb-2 block rounded-btn py-2 text-center text-[0.8rem] font-medium text-bone"
