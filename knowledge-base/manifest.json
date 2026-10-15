@@ -16,6 +16,13 @@
       "path": "rayan/support.md",
       "format": "md",
       "topic": "پشتیبانی"
+    },
+    {
+      "id": "rayan-brand-guide",
+      "title": "راهنمای برند و خدمات رایان دیجیتال",
+      "path": "rayan/brand-guide.md",
+      "format": "md",
+      "topic": "برند، خدمات و لحن"
     }
   ]
 }
