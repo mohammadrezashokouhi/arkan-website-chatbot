@@ -87,3 +87,12 @@ test('OpenRouter embeddings use retrieval prefixes and validate 1024 dimensions'
   assert.equal(calls[0][2].dimensions, 1024);
  } finally { globalThis.fetch = oldFetch; }
 });
+
+test('Persian RAG chunks stay within the 512-token embedding limit', () => {
+ const chunking = load('src/lib/rag/chunking.ts', {});
+ const text = Array.from({ length: 900 }, (_, i) => `واژه${i} برای آزمون قطعه‌بندی فارسی.`).join(' ');
+ const chunks = chunking.splitText(text, 500, 50);
+ assert.ok(chunks.length > 1);
+ assert.ok(chunks.every(chunk => chunk.content.length <= 500));
+ assert.ok(chunks.every(chunk => chunk.tokenCount <= 500));
+});

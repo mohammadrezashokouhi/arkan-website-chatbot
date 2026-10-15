@@ -119,7 +119,9 @@ function extract(fullPath, format) {
 }
 
 // ── قطعه‌بندی (هماهنگ با src/lib/rag/chunking.ts) ──
-const CPT = 3.5;
+// مدل رایگان LFM2.5 برای هر ورودی سقف ۵۱۲ توکن دارد. متن فارسی ممکن است
+// تقریباً به ازای هر نویسه یک توکن مصرف کند، پس این تخمین عمداً محافظه‌کارانه است.
+const CPT = 1;
 const estTokens = (t) => Math.ceil(t.length / CPT);
 function splitText(raw, chunkSizeTokens = 500, overlapTokens = 50) {
   const text = cleanText(raw);
